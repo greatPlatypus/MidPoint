@@ -1,0 +1,1009 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Mi-Chemin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout concept: a French road-sign prompt panel sits beside a to-scale map of France.
+   Color: ground, land, border ink, autoroute blue, guess red, midpoint gold.
+   Type: Barlow Condensed (signage display), Barlow (text and data). */
+:root {
+  --bg: #e9eef3;
+  --panel: #ffffff;
+  --line: #cdd7e1;
+  --fg: #12202f;
+  --muted: #566679;
+  --ground: #d7e5f1;
+  --land: #f7f8f5;
+  --land2: #e4e9e5;
+  --border: #2d4a68;
+  --grid: rgba(45, 74, 104, 0.13);
+  --sign: #0a4aa6;
+  --blue: #0a4aa6;
+  --btn: #0a4aa6;
+  --btnfg: #ffffff;
+  --red: #d5352d;
+  --gold: #f7c600;
+  --ink: #12202f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b121a;
+    --panel: #121c27;
+    --line: #243445;
+    --fg: #e6edf4;
+    --muted: #92a4b7;
+    --ground: #0d1d2c;
+    --land: #18293b;
+    --land2: #122131;
+    --border: #5d86b0;
+    --grid: rgba(143, 175, 206, 0.11);
+    --sign: #0f4fb4;
+    --blue: #5aa0ff;
+    --btn: #5aa0ff;
+    --btnfg: #071220;
+    --red: #ff6a5c;
+    --gold: #ffd23f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b121a;
+  --panel: #121c27;
+  --line: #243445;
+  --fg: #e6edf4;
+  --muted: #92a4b7;
+  --ground: #0d1d2c;
+  --land: #18293b;
+  --land2: #122131;
+  --border: #5d86b0;
+  --grid: rgba(143, 175, 206, 0.11);
+  --sign: #0f4fb4;
+  --blue: #5aa0ff;
+  --btn: #5aa0ff;
+  --btnfg: #071220;
+  --red: #ff6a5c;
+  --gold: #ffd23f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.45 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  padding-block: 20px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.app { max-width: 1100px; margin: 0 auto; display: grid; gap: 16px; }
+
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+h1 {
+  margin: 0;
+  font: 700 42px/1 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+.tag { margin: 6px 0 0; color: var(--muted); max-width: 52ch; }
+.stats { display: flex; gap: 8px; }
+.hdr-r { display: grid; gap: 10px; justify-items: end; }
+.langs { display: flex; gap: 4px; }
+.langs button { min-width: 42px; padding: 6px 9px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; font: 600 13px/1 'Barlow', sans-serif; letter-spacing: 0.06em; cursor: pointer; }
+.langs button:hover { border-color: var(--muted); }
+.langs button[aria-pressed="true"] { background: var(--btn); color: var(--btnfg); border-color: var(--btn); }
+.langs button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.mid { text-align: center; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs button { padding: 10px 18px 9px; margin-bottom: -1px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); font: 700 20px/1 'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; }
+.tabs button:hover { color: var(--fg); }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--blue); }
+.tabs button:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; }
+.stat { padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; min-width: 84px; }
+.stat small { display: block; font: 600 11px/1.3 'Barlow', sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.stat b { font: 700 24px/1.1 'Barlow Condensed', sans-serif; font-variant-numeric: tabular-nums; }
+
+.layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-areas: "map sign" "map panel";
+  grid-template-rows: auto 1fr;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "sign" "map" "panel"; grid-template-rows: none; }
+}
+
+/* Road-sign prompt */
+.sign { grid-area: sign; background: var(--sign); border-radius: 14px; padding: 5px; min-width: 0; }
+.sign-in { border: 2.5px solid #fff; border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; color: #fff; }
+.city { display: flex; align-items: center; gap: 12px; min-width: 0; font: 700 32px/1 'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: anywhere; }
+.pin { flex: none; width: 30px; height: 30px; border-radius: 6px; background: #fff; color: var(--sign); display: grid; place-items: center; font: 700 20px/1 'Barlow Condensed', sans-serif; letter-spacing: 0; }
+.mid { display: flex; align-items: center; gap: 10px; font: 600 12px/1.2 'Barlow', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; }
+.mid::before, .mid::after { content: ""; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.55); }
+
+/* Map */
+.mapwrap { grid-area: map; position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--ground); min-width: 0; }
+#map { display: block; width: 100%; height: auto; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.ctl { position: absolute; top: 10px; right: 10px; display: grid; gap: 6px; }
+.ctl button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 20px/1 'Barlow', sans-serif; cursor: pointer; }
+.ctl button:hover { border-color: var(--muted); }
+.ctl button:focus-visible, .btn:focus-visible, .tog input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.scale { position: absolute; left: 10px; bottom: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px 3px; font: 600 11px/1.2 'Barlow', sans-serif; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.scale i { display: block; height: 5px; border: 1.5px solid var(--fg); border-top: none; margin-bottom: 2px; }
+
+/* SVG map styling */
+.ground { fill: var(--ground); }
+#around { fill: var(--land2); stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+#water { fill: var(--ground); stroke: var(--border); stroke-width: 1.3; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+#grat line { stroke: var(--grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
+#land { fill: var(--land); stroke: var(--border); stroke-width: 1.3; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.mk text { font: 600 12.5px 'Barlow', sans-serif; fill: var(--fg); paint-order: stroke; stroke: var(--land); stroke-width: 3.5px; stroke-linejoin: round; }
+.geo text { fill: var(--muted); stroke: none; font: 600 10.5px 'Barlow', sans-serif; letter-spacing: 0.16em; text-transform: uppercase; text-anchor: middle; opacity: 0.85; }
+.geo.sea text { font-style: italic; text-transform: none; letter-spacing: 0.06em; font-size: 12px; font-weight: 500; }
+.ref circle { fill: var(--muted); stroke: var(--land); stroke-width: 1; }
+.ref text { display: none; font-weight: 500; font-size: 11px; fill: var(--muted); }
+.ref.major text, .zoomed .ref text { display: block; }
+.ref.off { display: none; }
+.norefs #refs { display: none; }
+.city-mk circle { fill: var(--blue); stroke: var(--land); stroke-width: 2.5; }
+.city-mk text.name { font: 700 16px 'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; }
+.let { fill: #fff !important; stroke: none !important; font: 700 12px 'Barlow Condensed', sans-serif !important; text-anchor: middle; }
+.city-mk .let { fill: var(--btnfg) !important; }
+.guess-mk circle.o { fill: var(--red); stroke: #fff; stroke-width: 2.5; }
+.guess-mk circle.c { fill: #fff; }
+.mid-mk circle.o { fill: var(--gold); stroke: var(--ink); stroke-width: 2.5; }
+.mid-mk circle.c { fill: var(--ink); }
+.mid-mk .let { fill: var(--ink) !important; }
+.pulse { fill: none; stroke: var(--gold); stroke-width: 2.5; transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
+@keyframes pulse { from { transform: scale(0.7); opacity: 0.95; } to { transform: scale(2.3); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; opacity: 0.6; } }
+line.ab { stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; }
+line.err { stroke: var(--red); stroke-width: 2.4; vector-effect: non-scaling-stroke; }
+
+/* Side panel */
+.panelwrap { grid-area: panel; display: grid; gap: 12px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+.hint { margin: 0; color: var(--muted); }
+.btn { width: 100%; padding: 13px 18px; border: 0; border-radius: 8px; background: var(--btn); color: var(--btnfg); font: 600 17px/1.1 'Barlow', sans-serif; cursor: pointer; }
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.btn:not([disabled]):hover { filter: brightness(1.08); }
+.tog { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; cursor: pointer; padding-inline: 2px; }
+.tog input { width: 18px; height: 18px; accent-color: var(--btn); }
+
+.rating { font: 700 15px/1 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
+.pts { font: 700 68px/1 'Barlow Condensed', sans-serif; font-variant-numeric: tabular-nums; }
+.pts small { font-size: 20px; color: var(--muted); font-weight: 600; margin-left: 6px; }
+.meter { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--blue); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin: 0; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+dl { margin: 0; display: grid; gap: 8px; }
+dl div { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+dt { color: var(--muted); }
+dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.recap { list-style: none; margin: 0; padding: 0; display: grid; }
+.recap li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 4px 12px; align-items: baseline; border-top: 1px solid var(--line); padding: 8px 0; font-variant-numeric: tabular-nums; }
+.recap .n { width: 22px; height: 22px; border-radius: 50%; background: var(--gold); color: var(--ink); display: grid; place-items: center; font: 700 13px/1 'Barlow Condensed', sans-serif; }
+.recap .km { color: var(--muted); }
+.recap .p { font-weight: 600; min-width: 3ch; text-align: right; }
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <h1 data-i18n="title">Mi-Chemin</h1>
+      <p class="tag" data-i18n="tag">Two French cities, one question: where is the halfway point? Click as close to it as you can.</p>
+    </div>
+    <div class="hdr-r">
+    <div class="langs" role="group" aria-label="Language">
+      <button type="button" data-lang="fr" lang="fr" title="Français">FR</button>
+      <button type="button" data-lang="en" lang="en" title="English">EN</button>
+      <button type="button" data-lang="es" lang="es" title="Castellano">ES</button>
+      <button type="button" data-lang="ca" lang="ca" title="Català">CA</button>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><small data-i18n="round">Round</small><b id="st-round">1/5</b></div>
+      <div class="stat"><small data-i18n="score">Score</small><b id="st-score">0</b></div>
+      <div class="stat"><small data-i18n="best">Best</small><b id="st-best">–</b></div>
+    </div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" data-country="fr" data-i18n="tabFR">France</button>
+    <button type="button" role="tab" data-country="es" data-i18n="tabES">Spain</button>
+    <button type="button" role="tab" data-country="eu" data-i18n="tabEU">Europe</button>
+  </div>
+
+  <div class="layout">
+    <div class="sign" id="sign">
+      <div class="sign-in">
+        <div class="city"><span class="pin">A</span><span id="ca"></span></div>
+        <div class="mid" id="dist"></div>
+        <div class="city"><span class="pin">B</span><span id="cb"></span></div>
+      </div>
+    </div>
+
+    <div class="mapwrap">
+      <svg id="map" role="img" aria-label="Map of France. Click to place your guess for the halfway point."></svg>
+      <div class="ctl">
+        <button id="z-in" aria-label="Zoom in" title="Zoom in">+</button>
+        <button id="z-out" aria-label="Zoom out" title="Zoom out">&minus;</button>
+        <button id="z-fit" aria-label="Show whole map" title="Whole map" style="font-size:13px">Fit</button>
+      </div>
+      <div class="scale" id="scale"><i id="scale-bar"></i><span id="scale-lab"></span></div>
+    </div>
+
+    <div class="panelwrap">
+      <div class="card" id="panel" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Projection (equirectangular, scaled at 46.5°N) ---------- */
+  var K = 70;                       // map units per degree of latitude
+  var LON0 = 0, LON1 = 1, LAT1 = 1, LAT0 = 0, C0 = 1, W = 1, H = 1;
+  var MERC = false, S = 800, MY1 = 0;
+  var KM_PER_UNIT = 111.195 / K;
+  function mercY(lat) { return Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)); }
+  function configureProj(c) {
+    LON0 = c.lon0; LON1 = c.lon1; LAT0 = c.lat0; LAT1 = c.lat1;
+    MERC = !!c.merc;
+    if (MERC) {
+      S = c.S; MY1 = mercY(LAT1);
+      W = (LON1 - LON0) * Math.PI / 180 * S; H = (MY1 - mercY(LAT0)) * S;
+      KM_PER_UNIT = 6371.0088 * Math.cos(c.ref * Math.PI / 180) / S;
+    } else {
+      C0 = Math.cos(c.ref * Math.PI / 180);
+      W = (LON1 - LON0) * C0 * K; H = (LAT1 - LAT0) * K;
+      KM_PER_UNIT = 111.195 / K;
+    }
+  }
+  function proj(lon, lat) { return MERC ? [(lon - LON0) * Math.PI / 180 * S, (MY1 - mercY(lat)) * S] : [(lon - LON0) * C0 * K, (LAT1 - lat) * K]; }
+  function inv(x, y) { return MERC ? [x / S * 180 / Math.PI + LON0, (2 * Math.atan(Math.exp(MY1 - y / S)) - Math.PI / 2) * 180 / Math.PI] : [x / (C0 * K) + LON0, LAT1 - y / K]; }
+
+  /* ---------- Geography ---------- */
+  var R = 6371.0088;
+  function rad(d) { return d * Math.PI / 180; }
+  function hav(a, b) {
+    var dLat = rad(b[1] - a[1]), dLon = rad(b[0] - a[0]);
+    var s = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.pow(Math.sin(dLon / 2), 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+  }
+  function midpoint(a, b) {
+    var p1 = rad(a[1]), l1 = rad(a[0]), p2 = rad(b[1]), l2 = rad(b[0]);
+    var bx = Math.cos(p2) * Math.cos(l2 - l1), by = Math.cos(p2) * Math.sin(l2 - l1);
+    var p3 = Math.atan2(Math.sin(p1) + Math.sin(p2), Math.sqrt(Math.pow(Math.cos(p1) + bx, 2) + by * by));
+    var l3 = l1 + Math.atan2(by, Math.cos(p1) + bx);
+    return [((l3 * 180 / Math.PI + 540) % 360) - 180, p3 * 180 / Math.PI];
+  }
+
+  var FRANCE = [
+    [2.55,51.09],[2.37,51.05],[2.10,51.00],[1.86,50.97],[1.58,50.87],[1.60,50.72],[1.57,50.52],[1.56,50.30],[1.50,50.18],[1.38,50.07],
+    [1.08,49.93],[0.72,49.88],[0.38,49.76],[0.20,49.71],[0.04,49.50],[0.23,49.43],[0.07,49.36],[-0.12,49.29],[-0.25,49.29],[-0.45,49.34],
+    [-0.65,49.34],[-0.90,49.38],[-1.12,49.39],[-1.18,49.42],[-1.25,49.55],[-1.27,49.68],[-1.48,49.71],[-1.62,49.67],[-1.90,49.71],[-1.95,49.72],
+    [-1.85,49.55],[-1.80,49.38],[-1.57,48.85],[-1.50,48.68],[-1.85,48.69],[-2.02,48.65],[-2.32,48.69],[-2.47,48.63],[-2.72,48.53],[-2.85,48.62],
+    [-3.00,48.78],[-3.23,48.80],[-3.44,48.83],[-3.64,48.69],[-3.98,48.73],[-4.25,48.67],[-4.57,48.60],[-4.77,48.52],[-4.79,48.40],[-4.76,48.33],
+    [-4.70,48.25],[-4.35,48.15],[-4.73,48.04],[-4.55,47.99],[-4.37,47.80],[-4.10,47.85],[-3.90,47.85],[-3.55,47.77],[-3.36,47.72],[-3.15,47.52],
+    [-3.00,47.50],[-2.75,47.52],[-2.46,47.47],[-2.40,47.28],[-2.20,47.27],[-2.20,47.15],[-2.15,47.00],[-1.98,46.85],[-1.95,46.69],[-1.78,46.47],
+    [-1.40,46.35],[-1.15,46.15],[-1.12,46.00],[-1.15,45.85],[-1.25,45.70],[-1.05,45.58],[-1.17,45.40],[-1.20,45.00],[-1.22,44.70],[-1.28,44.30],
+    [-1.30,44.00],[-1.38,43.80],[-1.45,43.55],[-1.62,43.46],[-1.78,43.37],
+    [-1.60,43.30],[-1.35,43.12],[-1.25,43.00],[-0.75,42.95],[-0.55,42.80],[-0.25,42.78],[0.15,42.75],[0.35,42.70],[0.68,42.86],[0.95,42.80],
+    [1.10,42.72],[1.45,42.60],[1.70,42.50],[1.95,42.45],[2.20,42.42],[2.60,42.35],[2.90,42.47],[3.17,42.43],
+    [3.12,42.52],[3.03,42.62],[3.04,42.78],[3.00,42.95],[3.15,43.15],[3.30,43.20],[3.50,43.28],[3.68,43.38],[3.95,43.52],[4.15,43.55],
+    [4.35,43.55],[4.55,43.45],[4.85,43.35],[5.05,43.40],[5.30,43.33],[5.37,43.27],[5.55,43.20],[5.80,43.12],[5.95,43.09],[6.20,43.05],
+    [6.40,43.15],[6.65,43.20],[6.70,43.30],[6.75,43.42],[6.95,43.50],[7.05,43.56],[7.20,43.65],[7.28,43.70],[7.42,43.74],[7.50,43.78],
+    [7.55,43.92],[7.67,44.15],[7.40,44.15],[7.05,44.22],[6.90,44.42],[6.95,44.62],[6.72,44.93],[6.62,45.11],[7.00,45.22],[7.13,45.42],
+    [6.98,45.65],[6.87,45.83],[6.93,46.05],[6.80,46.38],[6.50,46.42],[6.25,46.32],[6.12,46.20],[5.97,46.15],[6.04,46.30],[6.16,46.45],
+    [6.35,46.65],[6.45,46.78],[6.68,47.00],[6.95,47.28],[7.03,47.43],[7.15,47.50],[7.50,47.58],[7.59,47.59],[7.57,47.70],[7.57,47.90],
+    [7.62,48.10],[7.72,48.35],[7.80,48.58],[8.00,48.78],[8.22,48.97],[7.95,49.04],[7.60,49.05],[7.20,49.12],[6.95,49.22],[6.70,49.20],
+    [6.37,49.47],[6.25,49.50],[6.10,49.47],[5.95,49.50],[5.82,49.54],[5.40,49.52],[5.15,49.69],[5.00,49.78],[4.85,49.95],[4.88,50.13],
+    [4.50,49.95],[4.20,49.98],[4.15,50.25],[3.90,50.33],[3.65,50.45],[3.45,50.52],[3.28,50.52],[3.12,50.78],[2.90,50.73],[2.70,50.82],[2.58,50.85]
+  ];
+  var CORSICA = [
+    [9.40,43.00],[9.48,42.85],[9.46,42.70],[9.55,42.15],[9.40,41.86],[9.28,41.59],[9.16,41.38],[8.90,41.66],[8.70,41.92],[8.58,42.15],
+    [8.62,42.40],[8.75,42.57],[9.10,42.73],[9.30,42.70],[9.32,42.88]
+  ];
+
+  // name, lon, lat, major (labelled by default)
+  var RAW = [
+    ['Paris',2.3522,48.8566,1],['Marseille',5.3698,43.2965,1],['Lyon',4.8357,45.7640,1],['Toulouse',1.4442,43.6047,1],
+    ['Nice',7.2620,43.7102,1],['Nantes',-1.5536,47.2184,1],['Strasbourg',7.7521,48.5734,1],['Montpellier',3.8767,43.6108,1],
+    ['Bordeaux',-0.5792,44.8378,1],['Lille',3.0573,50.6292,1],['Rennes',-1.6778,48.1173,1],['Brest',-4.4861,48.3904,1],
+    ['Dijon',5.0415,47.3220,1],['Limoges',1.2611,45.8336,1],['Ajaccio',8.7386,41.9192,1],['Clermont-Ferrand',3.0870,45.7772,1],
+    ['Reims',4.0317,49.2583],['Le Havre',0.1079,49.4944],['Saint-Étienne',4.3872,45.4397],['Toulon',5.9280,43.1242],
+    ['Grenoble',5.7245,45.1885],['Angers',-0.5518,47.4784],['Nîmes',4.3601,43.8367],['Le Mans',0.1996,48.0061],
+    ['Aix-en-Provence',5.4474,43.5297],['Tours',0.6848,47.3941],['Amiens',2.2957,49.8941],['Perpignan',2.8954,42.6887],
+    ['Metz',6.1757,49.1193],['Besançon',6.0240,47.2378],['Orléans',1.9093,47.9029],['Rouen',1.0993,49.4432],
+    ['Caen',-0.3707,49.1829],['Nancy',6.1844,48.6921],['Avignon',4.8055,43.9493],['Poitiers',0.3404,46.5802],
+    ['La Rochelle',-1.1520,46.1603],['Pau',-0.3708,43.2951],['Bayonne',-1.4748,43.4929],['Bastia',9.4500,42.6997],
+    ['Cherbourg',-1.6163,49.6337],['Quimper',-4.1024,47.9960],['Lorient',-3.3702,47.7482],['Calais',1.8587,50.9513],
+    ['Dunkerque',2.3768,51.0343],['Carcassonne',2.3491,43.2130],['Annecy',6.1294,45.8992],['Chambéry',5.9179,45.5646],
+    ['Valence',4.8924,44.9334],['Troyes',4.0744,48.2973],['Mulhouse',7.3359,47.7508],['Colmar',7.3580,48.0794],
+    ['Brive-la-Gaillarde',1.5332,45.1590],['Saint-Malo',-2.0260,48.6493],['Biarritz',-1.5586,43.4832],['Cannes',7.0128,43.5528],
+    ['Bourges',2.3984,47.0810],['Cahors',1.4437,44.4475],['Rodez',2.5750,44.3506],['Albi',2.1480,43.9290],
+    ['Aurillac',2.4402,44.9264],['Périgueux',0.7210,45.1840],['Angoulême',0.1562,45.6484],['Saint-Nazaire',-2.2138,47.2734],
+    ['Vannes',-2.7603,47.6582],['Lourdes',-0.0463,43.0943],['Gap',6.0786,44.5594],['Digne-les-Bains',6.2358,44.0920],
+    ['Mont-de-Marsan',-0.5000,43.8900],['Auch',0.5855,43.6460],['Tarbes',0.0780,43.2328],['Nevers',3.1590,46.9890],
+    ['Auxerre',3.5740,47.7980],['Chartres',1.4890,48.4469],['Laval',-0.7700,48.0690],['Saint-Brieuc',-2.7600,48.5140],
+    ['Épinal',6.4500,48.1730],['Charleville-Mézières',4.7200,49.7620]
+  ];
+  var FR_CITIES = RAW.map(function (r) { return { name: r[0], ll: [r[1], r[2]], major: !!r[3] }; });
+
+  var SPAIN = [
+    [-1.79,43.37],[-1.98,43.32],[-2.17,43.29],[-2.50,43.35],[-2.72,43.42],[-3.02,43.38],[-3.22,43.39],[-3.45,43.45],[-3.80,43.47],[-4.20,43.45],
+    [-4.75,43.42],[-5.07,43.47],[-5.66,43.55],[-5.85,43.66],[-6.15,43.57],[-6.54,43.55],[-7.04,43.54],[-7.40,43.72],[-7.69,43.79],[-8.00,43.72],
+    [-8.25,43.48],[-8.39,43.37],[-8.80,43.32],[-9.18,43.13],[-9.27,42.90],[-9.05,42.78],[-8.95,42.58],[-8.90,42.25],[-8.77,42.20],[-8.85,42.12],
+    [-8.88,41.90],[-8.65,42.05],[-8.20,42.06],[-7.60,41.90],[-6.80,41.92],[-6.55,41.68],[-6.27,41.50],[-6.50,41.18],[-6.95,41.03],[-6.85,40.60],
+    [-6.85,40.25],[-7.00,40.00],[-7.10,39.70],[-7.25,39.50],[-7.20,39.15],[-7.05,38.88],[-7.15,38.65],[-7.25,38.20],[-7.30,38.05],[-7.50,37.60],
+    [-7.42,37.20],[-6.95,37.20],[-6.45,36.95],[-6.35,36.78],[-6.30,36.53],[-6.03,36.18],[-5.60,36.01],[-5.35,36.12],[-5.15,36.42],[-4.88,36.50],
+    [-4.42,36.72],[-3.52,36.72],[-3.02,36.74],[-2.46,36.83],[-2.19,36.72],[-1.90,37.00],[-1.58,37.40],[-0.99,37.60],[-0.69,37.63],[-0.68,37.97],
+    [-0.48,38.35],[-0.12,38.54],[0.23,38.73],[-0.15,38.97],[-0.31,39.47],[0.00,39.95],[0.40,40.36],[0.88,40.72],[1.25,41.11],[1.80,41.23],
+    [2.19,41.38],[2.80,41.67],[3.13,41.85],[3.17,42.26],[3.32,42.32],[3.17,42.43],
+    [2.90,42.47],[2.60,42.35],[2.20,42.42],[1.95,42.45],[1.70,42.50],[1.45,42.60],[1.10,42.72],[0.95,42.80],[0.68,42.86],[0.35,42.70],
+    [0.15,42.75],[-0.25,42.78],[-0.55,42.80],[-0.75,42.95],[-1.25,43.00],[-1.35,43.12],[-1.60,43.30]
+  ];
+  var MALLORCA = [[2.38,39.56],[2.65,39.52],[2.78,39.36],[3.05,39.27],[3.27,39.38],[3.37,39.54],[3.47,39.72],[3.30,39.85],[3.21,39.96],[3.08,39.88],[2.80,39.85],[2.60,39.75],[2.38,39.62]];
+  var MENORCA = [[3.83,40.00],[4.00,40.07],[4.30,40.05],[4.30,39.88],[4.10,39.82],[3.88,39.92]];
+  var IBIZA = [[1.22,38.95],[1.40,39.10],[1.60,39.05],[1.55,38.90],[1.40,38.85]];
+
+  var ES_RAW = [
+    ['Madrid',-3.7038,40.4168],['Barcelona',2.1734,41.3851],['Valencia',-0.3763,39.4699],['Sevilla',-5.9845,37.3891],
+    ['Zaragoza',-0.8891,41.6488],['Málaga',-4.4214,36.7213],['Murcia',-1.1307,37.9922],['Palma',2.6502,39.5696],
+    ['Bilbao',-2.9253,43.2630],['Alicante',-0.4907,38.3452],['Córdoba',-4.7794,37.8882],['Valladolid',-4.7245,41.6523],
+    ['Vigo',-8.7207,42.2406],['Gijón',-5.6611,43.5322],['A Coruña',-8.4115,43.3623],['Granada',-3.5986,37.1773],
+    ['Vitoria-Gasteiz',-2.6727,42.8467],['Elche',-0.7010,38.2622],['Oviedo',-5.8494,43.3614],['Badajoz',-6.9707,38.8794],
+    ['Cartagena',-0.9863,37.6057],['Jerez de la Frontera',-6.1365,36.6850],['Pamplona',-1.6432,42.8125],['Almería',-2.4637,36.8340],
+    ['San Sebastián',-1.9812,43.3183],['Burgos',-3.6997,42.3440],['Santander',-3.8044,43.4623],['Castellón de la Plana',-0.0377,39.9864],
+    ['Albacete',-1.8582,38.9943],['Logroño',-2.4450,42.4627],['Salamanca',-5.6635,40.9701],['Huelva',-6.9447,37.2614],
+    ['Lleida',0.6200,41.6176],['Tarragona',1.2445,41.1189],['León',-5.5671,42.5987],['Cádiz',-6.2886,36.5271],
+    ['Jaén',-3.7903,37.7796],['Ourense',-7.8641,42.3358],['Girona',2.8214,41.9794],['Lugo',-7.5560,43.0121],
+    ['Cáceres',-6.3722,39.4753],['Toledo',-4.0273,39.8628],['Santiago de Compostela',-8.5448,42.8782],['Pontevedra',-8.6446,42.4310],
+    ['Teruel',-1.1065,40.3456],['Huesca',-0.4087,42.1401],['Soria',-2.4637,41.7636],['Segovia',-4.1184,40.9429],
+    ['Ávila',-4.6819,40.6564],['Cuenca',-2.1374,40.0704],['Guadalajara',-3.1667,40.6333],['Ciudad Real',-3.9290,38.9863],
+    ['Palencia',-4.5240,42.0095],['Zamora',-5.7503,41.5033],['Algeciras',-5.4562,36.1408],['Ibiza',1.4329,38.9067],
+    ['Mahón',4.2637,39.8885],['Marbella',-4.8858,36.5100],['Mérida',-6.3436,38.9161],['Ponferrada',-6.5962,42.5466],
+    ['Tortosa',0.5216,40.8126]
+  ];
+  var ES_CITIES = ES_RAW.map(function (r) { return { name: r[0], ll: [r[1], r[2]] }; });
+
+  function ptIdx(arr, p) {
+    for (var i = 0; i < arr.length; i++) if (arr[i][0] === p[0] && arr[i][1] === p[1]) return i;
+    throw new Error('point not found: ' + p);
+  }
+  function between(arr, a, b) {
+    var i = ptIdx(arr, a), j = ptIdx(arr, b);
+    return i <= j ? arr.slice(i, j + 1) : arr.slice(j, i + 1).reverse();
+  }
+
+  // Mainland Eurasia, traced from the Levant round the Mediterranean, Atlantic, North Sea, Baltic and Scandinavia.
+  var EU_EAST_MED = [
+    [35.2,33.0],[35.5,34.0],[35.85,34.45],[35.8,35.5],[36.2,36.6],[35.8,36.8],[34.6,36.8],[32.8,36.05],[32.0,36.5],[30.7,36.85],
+    [29.6,36.2],[29.1,36.65],[28.3,36.85],[27.4,37.0],[27.25,37.85],[26.8,38.4],[26.8,39.3],[26.4,40.0],[26.2,40.05],[26.75,40.4],
+    [26.2,40.8],[25.9,40.85],[24.4,40.93],[24.4,40.1],[23.35,39.95],[22.95,40.62],[22.6,40.25],[22.95,39.35],[22.6,38.9],[24.0,38.15],
+    [24.0,37.65],[23.6,37.95],[23.0,37.9],[23.15,37.6],[22.8,37.5],[23.2,36.45],[22.55,36.75],[22.5,36.4],[21.7,36.8],[21.65,37.25],
+    [21.2,37.7],[21.7,38.25],[21.4,38.35],[20.75,38.95],[20.25,39.5],[20.0,39.85],[19.45,40.45],[19.45,41.3],[19.4,41.8],[19.1,42.1],
+    [18.75,42.4],[18.1,42.65],[16.45,43.5],[15.2,44.1],[14.45,45.3],[13.85,44.85],[13.75,45.65],[12.35,45.43],[12.5,44.95],[12.55,44.05],
+    [13.5,43.62],[14.2,42.45],[15.0,42.0],[16.2,41.9],[16.85,41.13],[17.95,40.65],[18.35,39.8],[17.2,40.45],[17.15,39.08],[16.1,37.92],
+    [15.65,38.1],[15.9,38.68],[15.3,40.0],[14.75,40.65],[14.35,40.6],[14.25,40.83],[13.55,41.2],[12.6,41.45],[12.25,41.77],[11.8,42.1],
+    [10.5,42.93],[10.3,43.55],[9.8,44.1],[8.93,44.4],[7.5,43.78]
+  ];
+  var EU_PORTUGAL = [
+    [-7.9,37.0],[-8.67,37.1],[-9.0,37.02],[-8.85,37.95],[-8.9,38.5],[-9.3,38.68],[-9.5,38.78],[-9.38,39.35],[-8.88,40.15],[-8.75,40.65],
+    [-8.65,41.15],[-8.85,41.7],[-8.87,41.87]
+  ];
+  var EU_NORTH = [
+    [2.9,51.23],[3.55,51.45],[4.1,51.98],[4.55,52.46],[4.75,52.95],[5.4,53.18],[6.8,53.45],[7.2,53.35],[8.1,53.55],[8.55,53.58],
+    [8.7,53.87],[8.9,54.5],[8.65,54.9],[8.4,55.45],[8.1,55.55],[8.2,56.7],[8.6,57.1],[10.6,57.75],[10.55,57.45],[10.95,56.45],
+    [10.2,56.15],[9.5,55.5],[9.4,54.8],[10.15,54.35],[10.9,53.95],[12.1,54.15],[13.2,54.3],[14.25,53.9],[15.55,54.2],[16.85,54.58],
+    [17.55,54.75],[18.70,54.45],[19.4,54.35],[19.9,54.95],[20.9,55.3],[21.1,55.7],[21.0,56.5],[21.55,57.4],[22.6,57.75],[24.1,57.0],
+    [24.5,58.4],[23.5,58.95],[24.75,59.45],[28.0,59.45],[30.2,59.95],[28.75,60.7],[26.9,60.45],[24.95,60.17],[22.95,59.8],[22.25,60.45],
+    [21.5,61.1],[21.8,61.5],[21.6,63.1],[23.1,63.85],[25.45,65.0],[24.55,65.75],[24.15,65.85],[22.15,65.6],[21.0,64.7],[20.25,63.8],
+    [18.7,63.3],[17.3,62.4],[17.1,61.7],[17.15,60.67],[18.4,60.25],[18.07,59.33],[16.8,58.6],[16.65,57.75],[16.35,56.65],[15.6,56.15],
+    [14.35,55.55],[13.15,55.35],[13.0,55.6],[12.7,56.05],[12.85,56.65],[11.95,57.7],[11.2,58.9],[10.95,59.2],[10.75,59.9],[10.0,59.0],
+    [8.0,58.15],[7.05,57.98],[5.7,58.97],[5.2,60.4],[6.1,62.5],[7.7,63.1],[10.4,63.45],[11.5,64.5],[12.5,66.0],[12.0,72.0],
+    [45.0,72.0],[45.0,33.0]
+  ];
+  var EUROPE_MAIN = [].concat(
+    EU_EAST_MED,
+    between(FRANCE, [7.50,43.78], [3.17,42.43]),
+    between(SPAIN, [3.17,42.43], [-7.42,37.20]),
+    EU_PORTUGAL,
+    between(SPAIN, [-8.88,41.90], [-1.79,43.37]),
+    between(FRANCE, [-1.78,43.37], [2.55,51.09]),
+    EU_NORTH
+  );
+  var PORTUGAL = [].concat(EU_PORTUGAL, between(SPAIN, [-8.88,41.90], [-7.42,37.20]));
+  var NORTH_AFRICA = [
+    [-12,30],[-9.6,30.4],[-9.77,31.5],[-9.25,32.3],[-7.6,33.6],[-6.85,34.03],[-6.15,35.2],[-5.8,35.78],[-5.3,35.9],[-3.9,35.25],
+    [-2.95,35.3],[-1.9,35.1],[-0.65,35.75],[1.0,36.5],[3.05,36.77],[5.1,36.75],[7.0,37.0],[7.77,36.9],[9.0,37.0],[9.87,37.27],
+    [10.2,37.2],[10.3,36.8],[11.05,37.08],[10.6,36.4],[10.64,35.83],[10.76,34.74],[10.1,33.88],[10.0,30]
+  ];
+  var BRITAIN = [
+    [-5.70,50.05],[-5.20,49.96],[-4.15,50.35],[-3.55,50.25],[-2.45,50.55],[-1.30,50.78],[-0.14,50.82],[0.50,50.78],[1.40,51.13],[1.45,51.38],
+    [0.70,51.45],[1.28,51.95],[1.74,52.55],[1.30,52.93],[0.50,52.95],[0.38,52.78],[0.35,53.15],[0.10,53.55],[-0.08,54.12],[-0.60,54.49],
+    [-1.15,54.62],[-1.45,55.05],[-2.00,55.77],[-3.20,55.98],[-2.60,56.30],[-2.08,56.70],[-2.08,57.15],[-1.80,57.50],[-3.30,57.70],[-4.20,57.50],
+    [-3.03,58.64],[-5.00,58.63],[-5.15,57.90],[-5.83,57.00],[-5.50,56.40],[-5.80,55.30],[-4.90,55.90],[-4.65,55.45],[-5.05,54.90],[-3.50,54.90],
+    [-3.60,54.55],[-3.00,54.10],[-3.00,53.40],[-3.80,53.30],[-4.65,53.30],[-4.10,52.60],[-5.30,51.90],[-3.95,51.60],[-3.20,51.45],[-4.50,51.00],
+    [-4.95,50.55]
+  ];
+  var IRELAND = [
+    [-6.20,53.35],[-6.30,54.00],[-5.90,54.60],[-5.80,54.85],[-6.50,55.20],[-7.40,55.40],[-8.30,54.70],[-8.50,54.30],[-10.00,54.25],[-10.10,53.40],
+    [-9.05,53.20],[-9.40,52.90],[-9.90,52.55],[-10.45,52.10],[-10.30,51.80],[-9.80,51.45],[-8.30,51.80],[-7.10,52.10],[-6.35,52.20],[-6.00,52.90]
+  ];
+  var SICILY = [[12.45,37.8],[13.35,38.2],[15.65,38.25],[15.1,37.3],[15.3,36.7],[14.5,36.75],[13.4,37.1],[12.5,37.6]];
+  var SARDINIA = [[8.20,41.00],[9.25,41.25],[9.80,40.50],[9.60,39.20],[9.00,39.00],[8.40,38.90],[8.40,40.00]];
+  var CRETE = [[23.5,35.3],[24.3,35.4],[25.7,35.3],[26.3,35.2],[26.0,35.0],[24.5,34.95],[23.6,35.2]];
+  var CYPRUS = [[32.3,35.0],[33.0,35.35],[34.0,35.65],[34.6,35.7],[34.0,35.0],[33.0,34.6]];
+  var ZEALAND = [[11.1,55.55],[11.3,55.95],[12.1,56.1],[12.7,55.75],[12.4,55.25],[11.6,55.2]];
+  var BLACK_SEA = [
+    [29.1,41.2],[28.0,41.9],[27.5,42.5],[27.9,43.2],[28.65,44.2],[29.7,45.2],[30.2,45.8],[30.75,46.5],[31.6,46.6],[32.2,46.55],
+    [33.0,46.05],[32.6,45.7],[32.5,45.35],[33.5,44.6],[34.2,44.5],[35.4,45.0],[36.5,45.35],[36.9,45.2],[37.3,44.9],[37.8,44.7],
+    [39.1,44.1],[39.7,43.6],[41.0,43.0],[41.6,41.65],[39.7,41.0],[36.3,41.3],[35.15,42.0],[31.8,41.45]
+  ];
+
+  var EU_RAW = [
+    ['London',-0.1276,51.5072],['Paris',2.3522,48.8566],['Madrid',-3.7038,40.4168],['Lisbon',-9.1393,38.7223],
+    ['Rome',12.4964,41.9028],['Berlin',13.4050,52.5200],['Vienna',16.3738,48.2082],['Prague',14.4378,50.0755],
+    ['Warsaw',21.0122,52.2297],['Budapest',19.0402,47.4979],['Bucharest',26.1025,44.4268],['Sofia',23.3219,42.6977],
+    ['Athens',23.7275,37.9838],['Belgrade',20.4489,44.7866],['Zagreb',15.9819,45.8150],['Sarajevo',18.4131,43.8563],
+    ['Ljubljana',14.5058,46.0569],['Bratislava',17.1077,48.1486],['Vilnius',25.2797,54.6872],['Riga',24.1052,56.9496],
+    ['Tallinn',24.7536,59.4370],['Helsinki',24.9384,60.1699],['Stockholm',18.0686,59.3293],['Oslo',10.7522,59.9139],
+    ['Copenhagen',12.5683,55.6761],['Amsterdam',4.9041,52.3676],['Brussels',4.3517,50.8503],['Luxembourg',6.1296,49.6116],
+    ['Bern',7.4474,46.9480],['Dublin',-6.2603,53.3498],['Edinburgh',-3.1883,55.9533],['Kyiv',30.5234,50.4501],
+    ['Minsk',27.5615,53.9045],['Chișinău',28.8575,47.0105],['Moscow',37.6173,55.7558],['Saint Petersburg',30.3351,59.9343],
+    ['Istanbul',28.9784,41.0082],['Ankara',32.8597,39.9334],['Skopje',21.4254,41.9981],['Tirana',19.8187,41.3275],
+    ['Podgorica',19.2594,42.4304],['Barcelona',2.1734,41.3851],['Milan',9.1900,45.4642],['Munich',11.5820,48.1351],
+    ['Hamburg',9.9937,53.5511],['Lyon',4.8357,45.7640],['Marseille',5.3698,43.2965],['Naples',14.2681,40.8518],
+    ['Porto',-8.6291,41.1579],['Sevilla',-5.9845,37.3891],['Valencia',-0.3763,39.4699],['Gothenburg',11.9746,57.7089],
+    ['Kraków',19.9450,50.0647],['Gdańsk',18.6466,54.3520],['Thessaloniki',22.9444,40.6401],['Lviv',24.0297,49.8397],
+    ['Odesa',30.7233,46.4825],['Kharkiv',36.2304,49.9935],['Manchester',-2.2426,53.4808],['Glasgow',-4.2518,55.8642],
+    ['Cologne',6.9603,50.9375],['Zürich',8.5417,47.3769],['Palermo',13.3615,38.1157],['Bergen',5.3221,60.3913],
+    ['İzmir',27.1428,38.4237],['Rotterdam',4.4777,51.9244],['Cork',-8.4863,51.8985],['Turin',7.6869,45.0703],
+    ['Bordeaux',-0.5792,44.8378],['Toulouse',1.4442,43.6047],['Frankfurt',8.6821,50.1109],['Birmingham',-1.8904,52.4862],
+    ['Cluj-Napoca',23.5900,46.7712],['Varna',27.9147,43.2141],['Rostov-on-Don',39.7203,47.2357],['Dnipro',35.0462,48.4647],
+    ['Trondheim',10.3951,63.4305],['Aarhus',10.2039,56.1629],['Malmö',13.0038,55.6050],['Kaunas',23.9036,54.8985],
+    ['Brno',16.6068,49.1951],['Graz',15.4395,47.0707],['Bologna',11.3426,44.4949],['Florence',11.2558,43.7696],
+    ['Genoa',8.9463,44.4056],['Bari',16.8719,41.1171]
+  ];
+  var EU_CITIES = EU_RAW.map(function (r) { return { name: r[0], ll: [r[1], r[2]] }; });
+
+  var COUNTRIES = {
+    fr: {
+      proj: { lon0: -5.4, lon1: 10.0, lat0: 41.0, lat1: 51.4, ref: 46.5 },
+      polys: [FRANCE, CORSICA], around: [EUROPE_MAIN, BRITAIN], cities: FR_CITIES, range: [250, 950], scale: 150,
+      grat: { lats: [42, 44, 46, 48, 50], lons: [-4, -2, 0, 2, 4, 6, 8] },
+      tag: 'tag', aria: 'mapAria',
+      geo: [
+        ['manche', [-0.6, 50.35], 'sea'], ['atl', [-3.4, 45.6], 'sea'], ['med', [5.0, 42.45], 'sea'],
+        ['es', [-0.2, 42.2], ''], ['it', [7.9, 44.35], ''], ['ch', [7.9, 46.75], ''],
+        ['de', [8.6, 49.4], ''], ['be', [4.5, 50.6], '']
+      ]
+    },
+    es: {
+      proj: { lon0: -10.0, lon1: 5.2, lat0: 35.5, lat1: 44.2, ref: 40.0 },
+      polys: [SPAIN, MALLORCA, MENORCA, IBIZA], around: [EUROPE_MAIN, NORTH_AFRICA], cities: ES_CITIES, range: [250, 900], scale: 150,
+      grat: { lats: [36, 38, 40, 42, 44], lons: [-8, -6, -4, -2, 0, 2, 4] },
+      tag: 'tagES', aria: 'mapAriaES',
+      geo: [
+        ['cant', [-5.0, 44.0], 'sea'], ['atl', [-8.9, 36.6], 'sea'], ['med', [0.9, 37.6], 'sea'],
+        ['fr', [0.3, 44.0], ''], ['pt', [-8.2, 39.6], '']
+      ]
+    },
+    eu: {
+      proj: { lon0: -11, lon1: 40, lat0: 34, lat1: 66, ref: 50, merc: true, S: 880 },
+      polys: [EUROPE_MAIN, NORTH_AFRICA, BRITAIN, IRELAND, SICILY, SARDINIA, CORSICA, CRETE, CYPRUS, ZEALAND, MALLORCA, MENORCA, IBIZA],
+      water: [BLACK_SEA],
+      cities: EU_CITIES, range: [500, 2800], scale: 400,
+      grat: { lats: [35, 40, 45, 50, 55, 60, 65], lons: [-10, 0, 10, 20, 30, 40] },
+      tag: 'tagEU', aria: 'mapAriaEU',
+      geo: [
+        ['atl', [-7.0, 46.5], 'sea'], ['north', [3.0, 56.0], 'sea'], ['med', [17.0, 35.2], 'sea'],
+        ['black', [34.0, 43.2], 'sea'], ['baltic', [19.5, 57.9], 'sea']
+      ]
+    }
+  };
+  function detectCountry() {
+    var c = null;
+    try { c = localStorage.getItem('mi-chemin-country'); } catch (e) {}
+    return COUNTRIES[c] ? c : 'fr';
+  }
+  var country = detectCountry();
+  var CITIES = COUNTRIES[country].cities;
+
+  /* ---------- DOM + SVG helpers ---------- */
+  var NS = 'http://www.w3.org/2000/svg';
+  function $(s) { return document.querySelector(s); }
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  var I18N = {
+    fr: {
+      title: "Mi-Chemin",
+      tabFR: "France", tabES: "Espagne", tabEU: "Europe",
+      tagEU: "Deux villes européennes, une question : où est le milieu ? Cliquez au plus près.",
+      mapAriaEU: "Carte de l'Europe. Cliquez pour placer votre estimation du milieu.",
+      tagES: "Deux villes espagnoles, une question : où est le milieu ? Cliquez au plus près.",
+      mapAriaES: "Carte de l'Espagne. Cliquez pour placer votre estimation du milieu.",
+      tag: "Deux villes françaises, une question : où est le milieu ? Cliquez au plus près.",
+      round: "Tour", score: "Score", best: "Record",
+      zin: "Zoom avant", zout: "Zoom arrière", fit: "Tout", fitT: "Carte entière",
+      refs: "Afficher les villes de repère",
+      mapAria: "Carte de la France. Cliquez pour placer votre estimation du milieu.",
+      halfway: "À mi-chemin ? · {n} km d'écart",
+      hintNone: "Cliquez sur la carte là où vous pensez que se trouve le milieu. Molette ou pincement pour zoomer, glissez pour déplacer.",
+      hintPlaced: "Point placé. Cliquez ailleurs pour le déplacer, ou validez.",
+      lock: "Valider", next: "Tour suivant", final: "Voir le score final", again: "Rejouer",
+      you: "Vous", midpoint: "Milieu", lgGuess: "Votre point", lgMid: "Vrai milieu",
+      yourDist: "Votre écart", nearest: "Ville la plus proche du milieu", route: "{a} à {b}",
+      w: ["Au millimètre", "Superbe", "Proche", "Correct", "Loin", "Très loin"],
+      ti: ["Cartographe", "Navigateur", "Routard", "Touriste du dimanche", "Perdu en pleine campagne"],
+      geo: { manche: "Manche", atl: "Atlantique", med: "Méditerranée", es: "Espagne", it: "Italie", ch: "Suisse", de: "Allemagne", be: "Belgique", cant: "Mer Cantabrique", pt: "Portugal", fr: "France", north: "Mer du Nord", black: "Mer Noire", baltic: "Baltique" }
+    },
+    en: {
+      title: "Halfway",
+      tabFR: "France", tabES: "Spain", tabEU: "Europe",
+      tagEU: "Two European cities, one question: where is the halfway point? Click as close to it as you can.",
+      mapAriaEU: "Map of Europe. Click to place your guess for the halfway point.",
+      tagES: "Two Spanish cities, one question: where is the halfway point? Click as close to it as you can.",
+      mapAriaES: "Map of Spain. Click to place your guess for the halfway point.",
+      tag: "Two French cities, one question: where is the halfway point? Click as close to it as you can.",
+      round: "Round", score: "Score", best: "Best",
+      zin: "Zoom in", zout: "Zoom out", fit: "Fit", fitT: "Whole map",
+      refs: "Show reference cities on the map",
+      mapAria: "Map of France. Click to place your guess for the halfway point.",
+      halfway: "Halfway? · {n} km apart",
+      hintNone: "Click the map where you think the halfway point lies. Scroll or pinch to zoom, drag to pan.",
+      hintPlaced: "Guess placed. Click elsewhere to move it, or lock it in.",
+      lock: "Lock in guess", next: "Next round", final: "See final score", again: "Play again",
+      you: "You", midpoint: "Midpoint", lgGuess: "Your guess", lgMid: "True midpoint",
+      yourDist: "Your distance", nearest: "Nearest city to midpoint", route: "{a} to {b}",
+      w: ["Pinpoint", "Superb", "Close", "Decent", "Far off", "Way off"],
+      ti: ["Cartographer", "Navigator", "Road tripper", "Weekend tourist", "Lost in the countryside"],
+      geo: { manche: "Channel", atl: "Atlantic", med: "Mediterranean", es: "Spain", it: "Italy", ch: "Switzerland", de: "Germany", be: "Belgium", cant: "Bay of Biscay", pt: "Portugal", fr: "France", north: "North Sea", black: "Black Sea", baltic: "Baltic Sea" }
+    },
+    es: {
+      title: "A Medio Camino",
+      tabFR: "Francia", tabES: "España", tabEU: "Europa",
+      tagEU: "Dos ciudades europeas, una pregunta: ¿dónde está el punto medio? Haz clic lo más cerca que puedas.",
+      mapAriaEU: "Mapa de Europa. Haz clic para colocar tu estimación del punto medio.",
+      tagES: "Dos ciudades españolas, una pregunta: ¿dónde está el punto medio? Haz clic lo más cerca que puedas.",
+      mapAriaES: "Mapa de España. Haz clic para colocar tu estimación del punto medio.",
+      tag: "Dos ciudades francesas, una pregunta: ¿dónde está el punto medio? Haz clic lo más cerca que puedas.",
+      round: "Ronda", score: "Puntos", best: "Récord",
+      zin: "Acercar", zout: "Alejar", fit: "Todo", fitT: "Mapa completo",
+      refs: "Mostrar ciudades de referencia",
+      mapAria: "Mapa de Francia. Haz clic para colocar tu estimación del punto medio.",
+      halfway: "¿A medio camino? · {n} km de distancia",
+      hintNone: "Haz clic en el mapa donde creas que está el punto medio. Rueda o pellizco para hacer zoom, arrastra para mover.",
+      hintPlaced: "Marca colocada. Haz clic en otro sitio para moverla, o confírmala.",
+      lock: "Confirmar", next: "Siguiente ronda", final: "Ver puntuación final", again: "Jugar de nuevo",
+      you: "Tú", midpoint: "Punto medio", lgGuess: "Tu marca", lgMid: "Punto medio real",
+      yourDist: "Tu distancia", nearest: "Ciudad más cercana al punto medio", route: "{a} a {b}",
+      w: ["Exacto", "Magnífico", "Cerca", "Aceptable", "Lejos", "Muy lejos"],
+      ti: ["Cartógrafo", "Navegante", "Viajero de carretera", "Turista de fin de semana", "Perdido en el campo"],
+      geo: { manche: "Canal de la Mancha", atl: "Atlántico", med: "Mediterráneo", es: "España", it: "Italia", ch: "Suiza", de: "Alemania", be: "Bélgica", cant: "Mar Cantábrico", pt: "Portugal", fr: "Francia", north: "Mar del Norte", black: "Mar Negro", baltic: "Báltico" }
+    },
+    ca: {
+      title: "A Mig Camí",
+      tabFR: "França", tabES: "Espanya", tabEU: "Europa",
+      tagEU: "Dues ciutats europees, una pregunta: on és el punt mitjà? Fes clic el més a prop que puguis.",
+      mapAriaEU: "Mapa d'Europa. Fes clic per col·locar la teva estimació del punt mitjà.",
+      tagES: "Dues ciutats espanyoles, una pregunta: on és el punt mitjà? Fes clic el més a prop que puguis.",
+      mapAriaES: "Mapa d'Espanya. Fes clic per col·locar la teva estimació del punt mitjà.",
+      tag: "Dues ciutats franceses, una pregunta: on és el punt mitjà? Fes clic el més a prop que puguis.",
+      round: "Ronda", score: "Punts", best: "Rècord",
+      zin: "Apropa", zout: "Allunya", fit: "Tot", fitT: "Mapa sencer",
+      refs: "Mostra les ciutats de referència",
+      mapAria: "Mapa de França. Fes clic per col·locar la teva estimació del punt mitjà.",
+      halfway: "A mig camí? · {n} km de distància",
+      hintNone: "Fes clic al mapa on creguis que és el punt mitjà. Roda o pessic per fer zoom, arrossega per moure.",
+      hintPlaced: "Marca col·locada. Fes clic en un altre lloc per moure-la, o confirma-la.",
+      lock: "Confirma", next: "Ronda següent", final: "Veure la puntuació final", again: "Torna a jugar",
+      you: "Tu", midpoint: "Punt mitjà", lgGuess: "La teva marca", lgMid: "Punt mitjà real",
+      yourDist: "La teva distància", nearest: "Ciutat més propera al punt mitjà", route: "{a} a {b}",
+      w: ["Exacte", "Magnífic", "A prop", "Acceptable", "Lluny", "Molt lluny"],
+      ti: ["Cartògraf", "Navegant", "Viatger de carretera", "Turista de cap de setmana", "Perdut pel camp"],
+      geo: { manche: "Canal de la Mànega", atl: "Atlàntic", med: "Mediterrània", es: "Espanya", it: "Itàlia", ch: "Suïssa", de: "Alemanya", be: "Bèlgica", cant: "Mar Cantàbric", pt: "Portugal", fr: "França", north: "Mar del Nord", black: "Mar Negra", baltic: "Bàltic" }
+    }
+  };
+  var LANGS = ['fr', 'en', 'es', 'ca'];
+  var LOC = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', ca: 'ca-ES' };
+  function detectLang() {
+    var sl = null;
+    try { sl = localStorage.getItem('mi-chemin-lang'); } catch (e) {}
+    if (LANGS.indexOf(sl) > -1) return sl;
+    var nl = ((navigator.language || 'en') + '').slice(0, 2).toLowerCase();
+    return LANGS.indexOf(nl) > -1 ? nl : 'en';
+  }
+  var lang = detectLang();
+  function t(k) { return I18N[lang][k]; }
+  function fmt(n) { return Math.round(n).toLocaleString(LOC[lang]); }
+  function fmtKm(d) {
+    return (d < 10 ? d.toLocaleString(LOC[lang], { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : fmt(d)) + ' km';
+  }
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var svg = $('#map');
+  var geoEls = [], over = null;
+
+  function buildMap() {
+    var cfg = COUNTRIES[country];
+    cancelAnimationFrame(tw);
+    svg.replaceChildren();
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.classList.remove('zoomed');
+    el('rect', { x: 0, y: 0, width: W, height: H, 'class': 'ground' }, svg);
+    var grat = el('g', { id: 'grat' }, svg);
+    cfg.grat.lats.forEach(function (lat) { var y = proj(0, lat)[1]; el('line', { x1: 0, y1: y, x2: W, y2: y }, grat); });
+    cfg.grat.lons.forEach(function (lon) { var x = proj(lon, 0)[0]; el('line', { x1: x, y1: 0, x2: x, y2: H }, grat); });
+    if (cfg.around) el('path', { id: 'around', d: cfg.around.map(pathD).join('') }, svg);
+    el('path', { id: 'land', d: cfg.polys.map(pathD).join('') }, svg);
+    if (cfg.water) el('path', { id: 'water', d: cfg.water.map(pathD).join('') }, svg);
+    var geo = el('g', {}, svg);
+    geoEls = [];
+    cfg.geo.forEach(function (g) { geoEls.push([g[0], txt(node(geo, g[1], 'geo ' + g[2]), '', 0, 0)]); });
+    over = el('g', { id: 'over' }, svg);
+    view = { x: 0, y: 0, w: W, h: H };
+    FULL = { x: 0, y: 0, w: W, h: H };
+  }
+
+  function pathD(poly) {
+    return 'M' + poly.map(function (p) { var q = proj(p[0], p[1]); return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join('L') + 'Z';
+  }
+
+  function node(parent, ll, cls) {
+    var p = proj(ll[0], ll[1]);
+    var g = el('g', { 'class': 'mk ' + cls }, parent);
+    g.dataset.x = p[0]; g.dataset.y = p[1];
+    return g;
+  }
+  function txt(g, s, x, y, anchor, cls) {
+    var t = el('text', { x: x, y: y, 'text-anchor': anchor || 'start' }, g);
+    if (cls) t.setAttribute('class', cls);
+    t.textContent = s;
+    return t;
+  }
+
+
+  /* ---------- View (zoom / pan) ---------- */
+  var view = { x: 0, y: 0, w: 1, h: 1 };
+  var FULL = { x: 0, y: 0, w: 1, h: 1 };
+  function clampV(v) {
+    var w = Math.min(W, Math.max(W / 10, v.w)), h = w * H / W;
+    return { x: Math.min(W - w, Math.max(0, v.x)), y: Math.min(H - h, Math.max(0, v.y)), w: w, h: h };
+  }
+  function svgWidth() { return svg.getBoundingClientRect().width || W; }
+  function updateScale() {
+    var k = view.w / svgWidth();
+    var ms = svg.getElementsByClassName('mk');
+    for (var i = 0; i < ms.length; i++) {
+      var g = ms[i];
+      g.setAttribute('transform', 'translate(' + g.dataset.x + ' ' + g.dataset.y + ') scale(' + k + ')');
+    }
+    var kmPerPx = KM_PER_UNIT * k, opts = [5, 10, 20, 50, 100, 200, 500], best = opts[0];
+    opts.forEach(function (o) { if (o / kmPerPx <= 130) best = o; });
+    $('#scale-bar').style.width = (best / kmPerPx) + 'px';
+    $('#scale-lab').textContent = best + ' km';
+  }
+  function setView(v) {
+    view = v;
+    svg.setAttribute('viewBox', v.x + ' ' + v.y + ' ' + v.w + ' ' + v.h);
+    svg.classList.toggle('zoomed', v.w < W * 0.6);
+    updateScale();
+  }
+  var tw = 0;
+  function tweenTo(t, ms) {
+    cancelAnimationFrame(tw);
+    t = clampV(t);
+    if (reduce || ms === 0) { setView(t); return; }
+    var s = { x: view.x, y: view.y, w: view.w, h: view.h }, t0 = performance.now(), dur = ms || 380;
+    function step(now) {
+      var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      setView({ x: s.x + (t.x - s.x) * e, y: s.y + (t.y - s.y) * e, w: s.w + (t.w - s.w) * e, h: s.h + (t.h - s.h) * e });
+      if (p < 1) tw = requestAnimationFrame(step);
+    }
+    tw = requestAnimationFrame(step);
+  }
+  function zoomAt(cx, cy, factor) {
+    cancelAnimationFrame(tw);
+    var r = svg.getBoundingClientRect(), fx = (cx - r.left) / r.width, fy = (cy - r.top) / r.height;
+    var px = view.x + fx * view.w, py = view.y + fy * view.h;
+    var w = Math.min(W, Math.max(W / 10, view.w * factor)), h = w * H / W;
+    setView(clampV({ x: px - fx * w, y: py - fy * h, w: w, h: h }));
+  }
+  function panBy(dx, dy) {
+    cancelAnimationFrame(tw);
+    var u = view.w / svgWidth();
+    setView(clampV({ x: view.x - dx * u, y: view.y - dy * u, w: view.w, h: view.h }));
+  }
+  function toSvg(cx, cy) {
+    var r = svg.getBoundingClientRect();
+    return [view.x + (cx - r.left) / r.width * view.w, view.y + (cy - r.top) / r.height * view.h];
+  }
+  function fitPoints(lls) {
+    var xs = [], ys = [];
+    lls.forEach(function (ll) { var p = proj(ll[0], ll[1]); xs.push(p[0]); ys.push(p[1]); });
+    var minx = Math.min.apply(null, xs), maxx = Math.max.apply(null, xs), miny = Math.min.apply(null, ys), maxy = Math.max.apply(null, ys);
+    var w = Math.max(maxx - minx, (maxy - miny) * W / H) * 1.45 + 60;
+    w = Math.min(W, Math.max(W / 4, w));
+    var h = w * H / W;
+    tweenTo({ x: (minx + maxx) / 2 - w / 2, y: (miny + maxy) / 2 - h / 2, w: w, h: h });
+  }
+
+  /* ---------- Pointer input: click to guess, drag to pan, wheel/pinch to zoom ---------- */
+  var ptrs = new Map(), moved = false, startPt = null, lastDist = 0;
+  function pts2() { var a = Array.from(ptrs.values()); return a.length >= 2 ? [a[0], a[1]] : null; }
+  function dist2() { var p = pts2(); return p ? Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) : 0; }
+  function center2() { var p = pts2(); return { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 }; }
+  svg.addEventListener('pointerdown', function (e) {
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 1) { moved = false; startPt = { x: e.clientX, y: e.clientY }; }
+    else { moved = true; lastDist = dist2(); }
+  });
+  svg.addEventListener('pointermove', function (e) {
+    var p = ptrs.get(e.pointerId);
+    if (!p) return;
+    var dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (ptrs.size === 1) {
+      if (!moved && Math.hypot(e.clientX - startPt.x, e.clientY - startPt.y) > 6) moved = true;
+      if (moved) panBy(dx, dy);
+    } else if (ptrs.size === 2) {
+      var d = dist2(), c = center2();
+      if (lastDist && d) zoomAt(c.x, c.y, lastDist / d);
+      lastDist = d;
+    }
+  });
+  function endPtr(e, allowClick) {
+    if (!ptrs.has(e.pointerId)) return;
+    var single = ptrs.size === 1;
+    ptrs.delete(e.pointerId);
+    if (ptrs.size < 2) lastDist = 0;
+    if (allowClick && single && !moved) placeGuess(e.clientX, e.clientY);
+  }
+  svg.addEventListener('pointerup', function (e) { endPtr(e, true); });
+  svg.addEventListener('pointercancel', function (e) { endPtr(e, false); });
+  svg.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, Math.exp(e.deltaY * 0.0015));
+  }, { passive: false });
+  function zoomCenter(f) { var r = svg.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, f); }
+  $('#z-in').addEventListener('click', function () { zoomCenter(0.6); });
+  $('#z-out').addEventListener('click', function () { zoomCenter(1 / 0.6); });
+  $('#z-fit').addEventListener('click', function () { tweenTo(FULL); });
+  if (window.ResizeObserver) new ResizeObserver(updateScale).observe(svg); else window.addEventListener('resize', updateScale);
+
+  /* ---------- Markers ---------- */
+  function line(a, b, cls) {
+    var p = proj(a[0], a[1]), q = proj(b[0], b[1]);
+    el('line', { x1: p[0], y1: p[1], x2: q[0], y2: q[1], 'class': cls }, over);
+  }
+  function cityMarker(c, letter) {
+    var g = node(over, c.ll, 'city-mk');
+    var flip = proj(c.ll[0], c.ll[1])[0] > W * 0.8;
+    el('circle', { r: 10 }, g);
+    txt(g, letter, 0, 4.2, 'middle', 'let');
+    txt(g, c.name, flip ? -15 : 15, 5, flip ? 'end' : 'start', 'name');
+  }
+  function guessMarker(ll, small, label) {
+    var g = node(over, ll, 'guess-mk');
+    el('circle', { 'class': 'o', r: small ? 5 : 8.5 }, g);
+    if (!small) el('circle', { 'class': 'c', r: 2.6 }, g);
+    if (label) txt(g, label, 0, -14, 'middle');
+  }
+  function midMarker(ll, label, small) {
+    var g = node(over, ll, 'mid-mk');
+    if (!small) el('circle', { 'class': 'pulse', r: 10 }, g);
+    el('circle', { 'class': 'o', r: small ? 8 : 9.5 }, g);
+    if (small) txt(g, label, 0, 4.2, 'middle', 'let');
+    else { el('circle', { 'class': 'c', r: 2.6 }, g); txt(g, label, 0, -17, 'middle'); }
+  }
+
+  /* ---------- Game state ---------- */
+  var ROUNDS = 5;
+  var state = null, best = null;
+
+  function pickPairs(n) {
+    var used = new Set(), pairs = [], guard = 0, RG = COUNTRIES[country].range;
+    while (pairs.length < n && guard++ < 20000) {
+      var a = CITIES[Math.floor(Math.random() * CITIES.length)], b = CITIES[Math.floor(Math.random() * CITIES.length)];
+      if (a === b || used.has(a) || used.has(b)) continue;
+      var d = hav(a.ll, b.ll);
+      if (d < RG[0] || d > RG[1]) continue;
+      used.add(a); used.add(b);
+      pairs.push({ a: a, b: b, d: d, mid: midpoint(a.ll, b.ll) });
+    }
+    return pairs;
+  }
+  function startGame() {
+    state = { round: 0, total: 0, pairs: pickPairs(ROUNDS), results: [], phase: 'guess', guess: null };
+    $('#sign').hidden = false;
+    setupRound();
+  }
+  function setupRound() {
+    var s = state, p = s.pairs[s.round];
+    s.phase = 'guess'; s.guess = null;
+    renderSign();
+    tweenTo(FULL);
+    drawOverlay(); renderPanel(); renderStats();
+  }
+  function placeGuess(cx, cy) {
+    if (!state || state.phase !== 'guess') return;
+    var q = toSvg(cx, cy);
+    state.guess = inv(q[0], q[1]);
+    drawOverlay(); renderPanel();
+  }
+  function lock() {
+    var s = state;
+    if (s.phase !== 'guess' || !s.guess) return;
+    var p = s.pairs[s.round];
+    var km = hav(s.guess, p.mid), pts = Math.round(1000 * Math.exp(-km / COUNTRIES[country].scale));
+    var near = null, nk = Infinity;
+    CITIES.forEach(function (c) { var d = hav(c.ll, p.mid); if (d < nk) { nk = d; near = c; } });
+    s.results.push({ a: p.a, b: p.b, d: p.d, mid: p.mid, guess: s.guess, km: km, pts: pts, near: near, nk: nk });
+    s.total += pts; s.phase = 'result';
+    drawOverlay();
+    fitPoints([p.a.ll, p.b.ll, s.guess, p.mid]);
+    renderPanel(); renderStats();
+  }
+  function next() {
+    var s = state;
+    if (s.round < s.pairs.length - 1) { s.round++; setupRound(); return; }
+    s.phase = 'final';
+    if (best === null || s.total > best) {
+      best = s.total;
+      try { localStorage.setItem('mi-chemin-best-' + country, String(best)); } catch (e) {}
+    }
+    $('#sign').hidden = true;
+    tweenTo(FULL);
+    drawOverlay(); renderPanel(); renderStats();
+  }
+
+  function drawOverlay() {
+    var s = state;
+    over.replaceChildren();
+    if (s.phase === 'final') {
+      s.results.forEach(function (r) { line(r.guess, r.mid, 'err'); });
+      s.results.forEach(function (r, i) { guessMarker(r.guess, true); midMarker(r.mid, String(i + 1), true); });
+    } else {
+      var p = s.pairs[s.round];
+      if (s.phase === 'result') { line(p.a.ll, p.b.ll, 'ab'); line(s.guess, p.mid, 'err'); }
+      if (s.phase === 'result') { cityMarker(p.a, 'A'); cityMarker(p.b, 'B'); }
+      if (s.phase === 'result') midMarker(p.mid, t('midpoint'));
+      if (s.guess) guessMarker(s.guess, false, s.phase === 'result' ? t('you') : '');
+    }
+    updateScale();
+  }
+
+  function word(km) {
+    var w = t('w'), f = COUNTRIES[country].scale / 150;
+    return km < 10 * f ? w[0] : km < 30 * f ? w[1] : km < 75 * f ? w[2] : km < 150 * f ? w[3] : km < 300 * f ? w[4] : w[5];
+  }
+  function title(total) {
+    var avg = total / ROUNDS, ti = t('ti');
+    return avg >= 800 ? ti[0] : avg >= 600 ? ti[1] : avg >= 400 ? ti[2] : avg >= 200 ? ti[3] : ti[4];
+  }
+  function renderSign() {
+    var p = state.pairs[state.round];
+    $('#ca').textContent = p.a.name; $('#cb').textContent = p.b.name;
+    $('#dist').textContent = t('halfway').replace('{n}', fmt(p.d));
+  }
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    document.querySelectorAll('[data-i18n]').forEach(function (n) { n.textContent = t(n.dataset.i18n); });
+    $('#z-in').setAttribute('aria-label', t('zin')); $('#z-in').title = t('zin');
+    $('#z-out').setAttribute('aria-label', t('zout')); $('#z-out').title = t('zout');
+    $('#z-fit').textContent = t('fit');
+    $('#z-fit').setAttribute('aria-label', t('fitT')); $('#z-fit').title = t('fitT');
+    svg.setAttribute('aria-label', t(COUNTRIES[country].aria));
+    $('.tag').textContent = t(COUNTRIES[country].tag);
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.country === country ? 'true' : 'false'); });
+    var geoT = t('geo');
+    geoEls.forEach(function (g) { g[1].textContent = geoT[g[0]]; });
+    document.querySelectorAll('.langs button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.lang === lang ? 'true' : 'false'); });
+  }
+  function setLang(l) {
+    if (LANGS.indexOf(l) < 0) return;
+    lang = l;
+    try { localStorage.setItem('mi-chemin-lang', l); } catch (e) {}
+    applyStatic();
+    if (state) {
+      if (state.phase !== 'final') renderSign();
+      renderPanel(); renderStats(); drawOverlay();
+    }
+  }
+
+  function loadBest() {
+    best = null;
+    try {
+      var v = localStorage.getItem('mi-chemin-best-' + country);
+      if (v === null && country === 'fr') v = localStorage.getItem('mi-chemin-best');
+      var n = parseInt(v, 10);
+      if (!isNaN(n)) best = n;
+    } catch (e) {}
+  }
+  function setCountry(c) {
+    if (!COUNTRIES[c] || (state && c === country)) return;
+    country = c;
+    try { localStorage.setItem('mi-chemin-country', c); } catch (e) {}
+    CITIES = COUNTRIES[c].cities;
+    configureProj(COUNTRIES[c].proj);
+    buildMap();
+    loadBest();
+    applyStatic();
+    startGame();
+  }
+
+  function renderStats() {
+    var s = state;
+    $('#st-round').textContent = Math.min(s.round + 1, ROUNDS) + '/' + ROUNDS;
+    $('#st-score').textContent = fmt(s.total);
+    $('#st-best').textContent = best === null ? '–' : fmt(best);
+  }
+
+  function renderPanel() {
+    var s = state, p = $('#panel');
+    if (s.phase === 'guess') {
+      p.innerHTML =
+        '<p class="hint">' + (s.guess
+          ? t('hintPlaced')
+          : t('hintNone')) + '</p>' +
+        '<button class="btn" data-act="lock"' + (s.guess ? '' : ' disabled') + '>' + t('lock') + '</button>';
+    } else if (s.phase === 'result') {
+      var r = s.results[s.results.length - 1], last = s.round === s.pairs.length - 1;
+      p.innerHTML =
+        '<div class="rating">' + word(r.km) + '</div>' +
+        '<div class="pts">+' + r.pts + '<small>/ 1000</small></div>' +
+        '<div class="meter"><i style="width:' + (r.pts / 10) + '%"></i></div>' +
+        '<p class="legend"><span><i class="dot" style="background:var(--red)"></i>' + t('lgGuess') + '</span><span><i class="dot" style="background:var(--gold)"></i>' + t('lgMid') + '</span></p>' +
+        '<dl><div><dt>' + t('yourDist') + '</dt><dd>' + fmtKm(r.km) + '</dd></div>' +
+        '<div><dt>' + t('nearest') + '</dt><dd>' + r.near.name + ' · ' + fmtKm(r.nk) + '</dd></div>' +
+        '<div><dt>' + t('route').replace('{a}', r.a.name).replace('{b}', r.b.name) + '</dt><dd>' + fmtKm(r.d) + '</dd></div></dl>' +
+        '<button class="btn" data-act="next">' + (last ? t('final') : t('next')) + '</button>';
+    } else {
+      var rows = s.results.map(function (r, i) {
+        return '<li><span class="n">' + (i + 1) + '</span><span>' + r.a.name + ' – ' + r.b.name + '</span><span class="km">' + fmtKm(r.km) + '</span><span class="p">' + r.pts + '</span></li>';
+      }).join('');
+      p.innerHTML =
+        '<div class="rating">' + title(s.total) + '</div>' +
+        '<div class="pts">' + fmt(s.total) + '<small>/ ' + fmt(ROUNDS * 1000) + '</small></div>' +
+        '<div class="meter"><i style="width:' + (s.total / (ROUNDS * 10)) + '%"></i></div>' +
+        '<ol class="recap">' + rows + '</ol>' +
+        '<button class="btn" data-act="again">' + t('again') + '</button>';
+    }
+  }
+
+  $('#panel').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]');
+    if (!b || b.disabled) return;
+    var a = b.dataset.act;
+    if (a === 'lock') lock(); else if (a === 'next') next(); else if (a === 'again') startGame();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var t = document.activeElement && document.activeElement.tagName;
+    if (t === 'BUTTON' || t === 'INPUT') return;
+    var b = document.querySelector('#panel .btn:not([disabled])');
+    if (b) b.click();
+  });
+
+  document.querySelectorAll('.langs button').forEach(function (b) { b.addEventListener('click', function () { setLang(b.dataset.lang); }); });
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.addEventListener('click', function () { setCountry(b.dataset.country); }); });
+  setCountry(country);
+  window.__miChemin = { hav: hav, midpoint: midpoint, pickPairs: pickPairs, COUNTRIES: COUNTRIES, setCountry: setCountry, getCities: function () { return CITIES; } };
+})();
+</script>
+
+</body></html>
